@@ -70,88 +70,66 @@ def assigninds(f):
 def break_ups(massive):
     non_nmr = {}
     nmr_data_dict = {}
-    for key1, val1 in massive.items():
-        for key2, val2 in val1.items():
-            print(key2, "key2")
-            print(val2, "val2")
-            '''if 'NMR Status' in key2:
-                x = val2
-            if x '''
-            if 'NMR Data' not in key2:
-                non_nmr[key2] = val2
-            elif 'NMR Data' in key2:
-                nmr_data_dict[key1] = val2
-            else: 
-                continue
-        print(non_nmr)
-        print(nmr_data_dict)
-        exit()
-    print(non_nmr)
-    #print(nmr_data_dict)
-    non_nmr_df = pd.Series(non_nmr) #This should be a DF, didn't like no index being called tho          
-    #Successfully split into two, combine into a dictionary or DF?
-    return non_nmr_df, nmr_data_dict
-# how to get integer from dataframe for frequency centroid and span
-# how to get rand_data to stop saying not referenced (dummy)
-# average sweeps?
 
+    #
+    #### "Massive dictonary[timestamp] = {stuff we want : stuff, NMR_DATA:nmr_data}
+
+    times = [k for k in massive]
+
+    for t in times:
+        row = massive.pop(t)
+        non_nmr_t = {}
+
+        ks = [k for k in row]
+        for key in ks:
+            if "NMR Data" not in key:
+                non_nmr_t[key] = row[key]
+            else:
+                continue
+        nmr_data_dict[t] = pd.DataFrame(row)
+        non_nmr[t] = non_nmr_t
+
+    return nmr_data_dict, non_nmr
                  
 #want to break up df of NMR sweeps by continuous runs of the same type
-def seperate_runs(massive, nmr_data_dict, runtype):
-    x = []
-    for key1, val1 in massive.items():
-        #Value Error here
-        for key2, val2 in val1.items():
-            if 'NMR Status' in key2:
-                x.append(val2)
-    for val in x:
-        #print(val, x.index(val))
-        if val == '---':
-            null_inds = x.index(val)
-        elif val == 'Baseline':
-            BL_inds = x.index(val)
-        elif val == 'TE':
-            TE_inds = x.index(val)
-        elif val == 'Polarization':
-            PL_inds = x.index(val)
-    #print(BL_inds)
-    return True
-#
-    BL_data = {}
-    if runtype == 'Baseline':
-        for key, val in nmr_data_dict.items():
-            if x.index(val) not in BL_inds:
-                continue
-            elif x.index(val) in BL_inds: 
-                BL_data[key]=val
+def seperate_runs(nmr_data_dict, non_nmr):
+    run_dict = {}
+
+    print(nmr_data_dict)
+    print(non_nmr)
+
+    """
+    1) Turn the non_nmr nested dictionary into a dataframe, using the keys of non_nmr as the index of the dataframe (use stack overflow)
+        non_nmr[timestamp] = {non nmr data}
+
+    2) find changes of state with df[df["NMR Status"].shift()!=df["NMR Status"]].index.to_list
+
+    3) Find a way to create a list of tuples as I did from the changes of state that you detected from
+        step 2
+        [a, b, c, d, e, f, g, ..., n] -> [[a,b-1], [b, c-1], [c,c-1] ... ]
+
+    4) Using the list of tuples generated in step 3, create your run-seperated dictionary.
+
+    """
+    return run_dict
+    #
     #print(BL_data)            
     ###attempting to find row indeces of continuous runs of same types, then snip those indeces out to make run-type DFs of data    
     #would it be ok to keep the run-type with the NMR data and strip later after seperating them by runtype? would then be able to use the seperation functions below
     #is it ok to make the runtype a variable in function, or should i make multiple functions
-    return            
+    return
 
-def clean_na(dirtydf):
-    #remove any rows with ---, null readings
-    #check to see if something went wrong and value is nonetype
-    print(dirtydf is None)
-    cleandf = dirtydf.drop(dirtydf[dirtydf["NMR Status"]=='---'].index)
-    return cleandf
+class DataHandler(object):
+    def __init__(self, run_df, **kwargs):
+        self.run_df = run_df
 
-def seperateBL(cleandf):
-    #add values to different sets based on NMR status column
-    BL_df = pd.DataFrame(cleandf.loc[cleandf['NMR Status']=='Baseline'])
-    return BL_df
 
-def seperateTE(cleandf):
-    TE_df = pd.DataFrame(cleandf.loc[cleandf['NMR Status']=='TE'])
-    return TE_df
 
-def seperatePL(cleandf):
-    PL_df = pd.DataFrame(cleandf.loc[cleandf['NMR Status']=='Polarization'])
-    return PL_df
+
+
 
 dirtydata = load()
 assigned = assigninds(dirtydata)
 
 non_nmr_df, nmr_data_dict = break_ups(assigned) 
-BL_runs = seperate_runs(assigned, nmr_data_dict, 'Baseline')
+BL_runs = seperate_runs(assigned, nmr_data_dict)
