@@ -74,13 +74,13 @@ def break_ups(massive):
     #
     #### "Massive dictonary[timestamp] = {stuff we want : stuff, NMR_DATA:nmr_data}
 
-    times = massive.keys()
+    times = [k for k in massive]
 
     for t in times:
         row = massive.pop(t)
         non_nmr_t = {}
 
-        ks = row.keys()
+        ks = [k for k in row]
         for key in ks:
             if "NMR Data" not in key:
                 non_nmr_t[key] = row[key]
@@ -95,8 +95,11 @@ def break_ups(massive):
 def seperate_runs(nmr_data_dict, non_nmr):
     run_dict = {}
 
+    print(nmr_data_dict)
+    print(non_nmr)
+
     """
-    1) Turn the non_nmr nested dictionary into a dataframe, using the keys of non_nmr as the index of the dataframe
+    1) Turn the non_nmr nested dictionary into a dataframe, using the keys of non_nmr as the index of the dataframe (use stack overflow)
         non_nmr[timestamp] = {non nmr data}
 
     2) find changes of state with df[df["NMR Status"].shift()!=df["NMR Status"]].index.to_list
@@ -129,4 +132,4 @@ dirtydata = load()
 assigned = assigninds(dirtydata)
 
 non_nmr_df, nmr_data_dict = break_ups(assigned) 
-BL_runs = seperate_runs(assigned, nmr_data_dict, 'Baseline')
+BL_runs = seperate_runs(assigned, nmr_data_dict)
